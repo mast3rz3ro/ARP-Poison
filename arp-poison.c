@@ -88,7 +88,7 @@ main(int argc, char ** argv)
 
   puts("press ctrl+c to exit.");
   while (1) {
-    printf("%s: %s says %s is at %s\n", argv[1], argv[4], argv[2], argv[3]);
+    printf("%s: tell %s that %s is at %s\n", argv[1], argv[4], argv[2], argv[3]);
     sendto(sock, packet, PKTLEN, 0, (struct sockaddr *) &device, sizeof(device));
     sleep(2);
   }
